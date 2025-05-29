@@ -1,160 +1,280 @@
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
 
 const Index = () => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState(0);
+  const [volume, setVolume] = useState(0.7);
+  const [progress, setProgress] = useState(0);
+
   const tracks = [
     {
-      title: "Cosmic Bass Drop",
-      artist: "Space Beatz",
-      duration: "4:20",
+      title: "Deep Bass Frequencies",
+      artist: "SubWoofer",
+      src: "https://www.soundjay.com/misc/sounds/bass-drum-loop.mp3",
       image:
         "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop",
     },
     {
-      title: "Deep Universe",
-      artist: "Nebula Sound",
-      duration: "5:15",
+      title: "Underground Vibes",
+      artist: "Bass Master",
+      src: "https://www.soundjay.com/misc/sounds/bass-drum-loop.mp3",
       image:
         "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=300&h=300&fit=crop",
     },
     {
-      title: "Galactic Frequencies",
-      artist: "Void Bassline",
-      duration: "3:45",
+      title: "Heavy Drop Zone",
+      artist: "Beat Machine",
+      src: "https://www.soundjay.com/misc/sounds/bass-drum-loop.mp3",
       image:
         "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=300&h=300&fit=crop",
     },
   ];
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      audioRef.current.addEventListener("timeupdate", updateProgress);
+      audioRef.current.addEventListener("ended", nextTrack);
+
+      // Автозапуск
+      setTimeout(() => {
+        playTrack();
+      }, 1000);
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener("timeupdate", updateProgress);
+        audioRef.current.removeEventListener("ended", nextTrack);
+      }
+    };
+  }, []);
+
+  const updateProgress = () => {
+    if (audioRef.current) {
+      const percent =
+        (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setProgress(percent);
+    }
+  };
+
+  const playTrack = async () => {
+    if (audioRef.current) {
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.log("Автозапуск заблокирован браузером");
+      }
+    }
+  };
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const nextTrack = () => {
+    const next = (currentTrack + 1) % tracks.length;
+    setCurrentTrack(next);
+    setTimeout(playTrack, 100);
+  };
+
+  const prevTrack = () => {
+    const prev = currentTrack === 0 ? tracks.length - 1 : currentTrack - 1;
+    setCurrentTrack(prev);
+    setTimeout(playTrack, 100);
+  };
+
+  const changeVolume = (newVolume: number) => {
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black text-white">
-      {/* Hero Section */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent animate-pulse">
-            ЖИРНЫЙ БАСС
-          </h1>
-          <p className="text-xl text-gray-300 mb-8">
-            Самый мощный музон во вселенной 🌌
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white overflow-hidden">
+      {/* Скрытый аудио элемент */}
+      <audio
+        ref={audioRef}
+        src={tracks[currentTrack].src}
+        preload="auto"
+        loop={false}
+      />
 
-          {/* Bass Visualizer */}
-          <div className="flex justify-center items-end space-x-2 mb-8">
-            {[...Array(12)].map((_, i) => (
-              <div
-                key={i}
-                className={`bg-gradient-to-t from-purple-500 to-blue-400 rounded-t-full animate-pulse`}
-                style={{
-                  width: "12px",
-                  height: `${Math.random() * 60 + 20}px`,
-                  animationDelay: `${i * 0.1}s`,
-                }}
+      {/* Анимированный фон */}
+      <div className="fixed inset-0 opacity-20">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 animate-pulse"></div>
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute bg-white rounded-full opacity-30"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${Math.random() * 4 + 1}px`,
+              height: `${Math.random() * 4 + 1}px`,
+              animation: `pulse ${Math.random() * 3 + 2}s infinite`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 container mx-auto px-6 py-8">
+        {/* Главный плеер */}
+        <Card className="bg-black/50 border-purple-500/30 backdrop-blur-xl mb-8">
+          <CardContent className="p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                🎵 BASS STATION 🎵
+              </h1>
+              <p className="text-xl text-purple-300">Жирный басс играет 24/7</p>
+            </div>
+
+            {/* Текущий трек */}
+            <div className="flex items-center justify-center mb-8">
+              <img
+                src={tracks[currentTrack].image}
+                alt={tracks[currentTrack].title}
+                className="w-32 h-32 rounded-lg mr-6 shadow-2xl border-2 border-purple-500/50"
               />
-            ))}
-          </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {tracks[currentTrack].title}
+                </h2>
+                <p className="text-lg text-purple-300">
+                  {tracks[currentTrack].artist}
+                </p>
+                <div className="flex items-center mt-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                  <span className="text-green-400 text-sm">ИГРАЕТ СЕЙЧАС</span>
+                </div>
+              </div>
+            </div>
 
-          <div className="flex justify-center space-x-4 mb-12">
-            <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
-              <Icon name="Play" size={20} />
-              Врубить басс
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-purple-500 text-purple-400 hover:bg-purple-900"
-            >
-              <Icon name="Volume2" size={20} />
-              На максимум
-            </Button>
-          </div>
-        </div>
+            {/* Прогресс бар */}
+            <div className="mb-6">
+              <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 to-blue-400 transition-all duration-100"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
 
-        {/* Track List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {/* Управление */}
+            <div className="flex items-center justify-center space-x-6 mb-6">
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={prevTrack}
+                className="text-purple-400 hover:text-white"
+              >
+                <Icon name="SkipBack" size={28} />
+              </Button>
+
+              <Button
+                size="lg"
+                onClick={togglePlay}
+                className="bg-purple-600 hover:bg-purple-700 rounded-full w-16 h-16"
+              >
+                <Icon name={isPlaying ? "Pause" : "Play"} size={32} />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={nextTrack}
+                className="text-purple-400 hover:text-white"
+              >
+                <Icon name="SkipForward" size={28} />
+              </Button>
+            </div>
+
+            {/* Громкость */}
+            <div className="flex items-center justify-center space-x-4">
+              <Icon name="Volume2" size={24} className="text-purple-400" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={volume}
+                onChange={(e) => changeVolume(parseFloat(e.target.value))}
+                className="w-32 h-2 bg-gray-700 rounded-lg appearance-none slider"
+              />
+              <span className="text-purple-300 text-sm">
+                {Math.round(volume * 100)}%
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Список треков */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {tracks.map((track, index) => (
             <Card
               key={index}
-              className="bg-gray-800/50 border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 hover:scale-105"
+              className={`bg-gray-800/40 border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer ${
+                currentTrack === index
+                  ? "border-purple-500 bg-purple-900/30"
+                  : ""
+              }`}
+              onClick={() => {
+                setCurrentTrack(index);
+                setTimeout(playTrack, 100);
+              }}
             >
-              <CardHeader className="pb-3">
+              <CardContent className="p-4">
                 <img
                   src={track.image}
                   alt={track.title}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
+                  className="w-full h-32 object-cover rounded-lg mb-3"
                 />
-                <CardTitle className="text-white text-lg">
-                  {track.title}
-                </CardTitle>
-                <p className="text-purple-300">{track.artist}</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">{track.duration}</span>
-                  <Button
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Icon name="Play" size={16} />
-                  </Button>
-                </div>
+                <h3 className="text-white font-semibold mb-1">{track.title}</h3>
+                <p className="text-purple-300 text-sm">{track.artist}</p>
+                {currentTrack === index && (
+                  <div className="flex items-center mt-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></div>
+                    <span className="text-purple-400 text-xs">PLAYING</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
-
-        {/* Player Controls */}
-        <Card className="bg-gray-800/30 border-purple-500/20 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <img
-                  src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=60&h=60&fit=crop"
-                  alt="Now playing"
-                  className="w-12 h-12 rounded-lg"
-                />
-                <div>
-                  <p className="text-white font-semibold">Cosmic Bass Drop</p>
-                  <p className="text-purple-300 text-sm">Space Beatz</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="sm">
-                  <Icon name="SkipBack" size={20} />
-                </Button>
-                <Button
-                  size="lg"
-                  className="bg-purple-600 hover:bg-purple-700 rounded-full"
-                >
-                  <Icon name="Pause" size={24} />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Icon name="SkipForward" size={20} />
-                </Button>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Icon name="Volume2" size={20} className="text-purple-400" />
-                <div className="w-24 h-2 bg-gray-600 rounded-full">
-                  <div className="w-3/4 h-full bg-purple-500 rounded-full"></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mt-4">
-              <div className="w-full h-2 bg-gray-600 rounded-full">
-                <div className="w-1/3 h-full bg-gradient-to-r from-purple-500 to-blue-400 rounded-full"></div>
-              </div>
-              <div className="flex justify-between text-sm text-gray-400 mt-1">
-                <span>1:25</span>
-                <span>4:20</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #a855f7;
+          cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #a855f7;
+          cursor: pointer;
+          border: none;
+        }
+      `}</style>
     </div>
   );
 };
